@@ -33,7 +33,7 @@ trait AssociatesRelations
 
     public function action($action, $Model, $data, $message)
     {
-       return $this->associateRelation( $Model->$action($data), $message );
+        return $this->associateRelation( $Model->$action($data), $message );
     }
 
     public function attach(BelongsToMany $Model, $data)
@@ -54,14 +54,7 @@ trait AssociatesRelations
         return $this->action('sync', $Model, $data, $message);
 
     }
-    
-    public function updateWithExisting(BelongsToMany $Model,int $id, $data)
-    {
-        return $this->associateRelation($Model->updateExistingPivot($id, $data),
-        "Successfully updated records"
-    );
-    }
-	
+
     public function detach(BelongsToMany $Model, $data)
     {
         $message = "Successfully removed associated records";
