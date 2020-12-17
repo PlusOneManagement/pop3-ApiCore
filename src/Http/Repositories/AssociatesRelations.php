@@ -68,10 +68,11 @@ trait AssociatesRelations
         return $this->action('detach', $Model, $data, $message);
     }
 
-    public function associate(BelongsTo $Model, $data)
+    public function associate($Model, $data)
     {
         $message = "Successfully associated new records";
-        return $this->action('associate', $Model, $data, $message);
+        $Saved = $Model->associate($data)->save();
+        return $this->associateRelation( $Saved, $message );
     }
 
     public function createMany(HasMany $Model, $data = [])

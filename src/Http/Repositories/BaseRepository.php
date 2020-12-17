@@ -102,14 +102,39 @@ class BaseRepository
     {
        
         try {
-            $IDs = $request->id;
-            if(empty($IDs)){
-                $model->delete();
+
+            if($request->filled('id')){
+                $IDs = (array) $request->id;
+                $model->find($IDs)->delete();
             } else {
-                $model->delete($IDs);
+                $model->delete();
             }
             $this->setResult([
                 'message' =>  __('Successfully deleted record(s)'),
+                'data' => $model->toArray(),
+            ]);
+            //
+        } catch(\Exception $ex){
+            $this->setException($ex);
+        }
+        return $this->getResult();
+    }
+
+    public function destroy(Request $request, Model $model)
+    {
+
+        try {
+
+            if($request->filled('id')){
+                $IDs = (array) $request->id;
+                foreach ($model->find($IDs) as $m){
+                    $m->forceDelete();
+                }
+            } else {
+                $model->forceDelete();
+            }
+            $this->setResult([
+                'message' =>  __('Permanently deleted record(s)'),
                 'data' => $model->toArray(),
             ]);
             //
