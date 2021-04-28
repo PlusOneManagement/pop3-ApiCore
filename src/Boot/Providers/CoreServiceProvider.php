@@ -3,9 +3,12 @@
 namespace Core\Boot\Providers;
 
 use Core\Dev\Commands\MakeTraitCommand;
+use Core\Dev\Commands\RunSchemaCommand;
+use Core\Dev\Commands\RunSeedersCommand;
 use Illuminate\Support\ServiceProvider;
 use Core\Dev\Commands\RunInstallCommand;
 use Core\Dev\Commands\MakeRepoCommand;
+use Illuminate\Support\Str;
 
 class CoreServiceProvider extends ServiceProvider
 {
@@ -18,6 +21,8 @@ class CoreServiceProvider extends ServiceProvider
         RunInstallCommand::class,
         MakeTraitCommand::class,
         MakeRepoCommand::class,
+        RunSchemaCommand::class,
+        RunSeedersCommand::class,
     ];
 
     /**
@@ -26,12 +31,18 @@ class CoreServiceProvider extends ServiceProvider
      * @return void
      */
     public function register()
-    {       
+    {
+        return $this->registerCommands();
 
+    }
+
+    public function registerCommands()
+    {
         if ($this->app->runningInConsole()) {
-            $this->commands($this->commands);
+            $this->commands( $this->commands );
         }
     }
+
 
     /**
      * Bootstrap services.
