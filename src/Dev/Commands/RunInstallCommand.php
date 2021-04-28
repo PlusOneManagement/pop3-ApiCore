@@ -315,7 +315,7 @@ class RunInstallCommand extends Command
         $database = $db['database'];
 
         if(isset($host) && isset($username) && isset($port) && isset($username)){
-            $flags =" --compact --no-create-info";
+            $flags =" --compact --no-create-info --column-statistics=0";
             $mysqldump = "mysqldump -h $host -u $username -P $port $password $flags $database > $backup 2>&1";
             shell_exec( trim($mysqldump) );
         }
