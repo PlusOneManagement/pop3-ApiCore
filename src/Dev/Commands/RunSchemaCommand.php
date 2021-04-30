@@ -21,6 +21,7 @@ class RunSchemaCommand extends Command
                            {--b|backup : Backup database(s) into storage}
                            {--r|restore : Restore database(s) from backup}
                            {--f|force : Force dropping/creating database(s)}
+                           {--m|migrate : Generate/run database migrations}
                            {--s|storage= : Path to the backup storage file}";
 
     /**
@@ -53,6 +54,7 @@ class RunSchemaCommand extends Command
         $database = $this->option('database');
         $restore = $this->option('restore');
         $storage = $this->option('storage');
+        $migrate = $this->option('migrate');
 
         $this->line('======================================================');
 
@@ -70,6 +72,10 @@ class RunSchemaCommand extends Command
 
         if($database){
             $this->doSchema($dbConnect, $dbConfigs);
+        }
+
+        if($migrate){
+            $this->doMigrations($dbConnect, $dbConfigs);
         }
 
         $this->line('======================================================');
@@ -270,7 +276,6 @@ class RunSchemaCommand extends Command
             extract($dbConfigs);
 
             if($this->option('force')){
-                $this->warn("... backing up database '$database' if exists");
                 $this->doBackup($CONNECTION, $dbConfigs);
                 $CONNECTION->unprepared("DROP DATABASE IF EXISTS $database;");
             }
@@ -309,6 +314,67 @@ class RunSchemaCommand extends Command
                 $CONNECTION->unprepared("GRANT $privileges ON $database.* TO '$username'@'$host';");
             }
             $CONNECTION->unprepared('FLUSH PRIVILEGES;');
+        }
+    }
+
+    public function doMigrations($dbConnect, $dbConfigs)
+    {
+        $this->line('   Generating Database(s) and User(s)   ');
+        $this->line("------------------------------------------------------");
+
+        $runMigrations = $this->runMigrations($dbConnect, $dbConfigs);
+
+        if($runMigrations){
+            $this->info("Success in migrating database table(s)");
+        } else {
+            $this->error("Error migrating database table(s))");
+        }
+    }
+
+    public function runMigrations($dbConnect, $dbConfigs)
+    {
+        try {
+            $isForced = $this->option('force');
+
+            if ($isForced) {
+                $this->doBackup($dbConnect, $dbConfigs);
+            }
+
+            $conn = $dbConnect->getConfig('name');
+            $this->migrateDB($conn, $isForced);
+
+            foreach ($dbConfigs as $conn => $config){
+                $this->migrateDB($conn, $isForced);
+            }
+
+            return true;
+        } catch (\Excetion $ex){
+            $this->error($ex->getMessage());
+            return false;
+        }
+    }
+
+    public function migrateDB($dbConn, $isForced = false)
+    {
+        try {
+            $this->line('---------------------------------------');
+            $migrate = $isForced? 'migrate:fresh': 'migrate';
+
+            if(!Str::startsWith($dbConn, 'db_')){
+                return true;
+            }
+
+            $this->warn("Running `$migrate` on the `$dbConn` database connection ...");
+            $this->call($migrate, [
+                '--database' => $dbConn,
+                '--ansi' => $this->option('ansi') ?: true
+            ]);
+
+            $this->line('---------------------------------------');
+            return true;
+        } catch (\Excetion $ex){
+            $this->error($ex->getMessage());
+            return false;
         }
     }
 
