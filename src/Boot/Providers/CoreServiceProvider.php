@@ -2,6 +2,7 @@
 
 namespace Core\Boot\Providers;
 
+use Core\Dev\Commands\MakeClassCommand;
 use Core\Dev\Commands\MakeTraitCommand;
 use Core\Dev\Commands\RunSchemaCommand;
 use Core\Dev\Commands\RunSeedersCommand;
@@ -20,6 +21,7 @@ class CoreServiceProvider extends ServiceProvider
     protected $commands = [
         RunInstallCommand::class,
         MakeTraitCommand::class,
+        MakeClassCommand::class,
         MakeRepoCommand::class,
         RunSchemaCommand::class,
         RunSeedersCommand::class,
