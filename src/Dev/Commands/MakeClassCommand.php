@@ -23,7 +23,7 @@ class MakeClassCommand extends Command
         {name : name of the class to be created}
         {module? : name of the modules to be created in}
         {--p|path= : Location where the class will be added to: defaults to Services}
-        {--t|type= : The type of class will determine what folder, e.g. Observer, etc.
+        {--t|type= : The type of class will determine what folder, e.g. Observers, Services, etc.}
         {--namespace= : The namespace to create the Class in in}';
 
     /**
@@ -54,7 +54,7 @@ class MakeClassCommand extends Command
         $DS = DIRECTORY_SEPARATOR;
 
         $class = $this->argument('name');
-        $type = ucwords($this->argument('type') ?: 'services');
+        $type = ucwords($this->option('type') ?: 'services');
         if($module = $this->argument('module')){
             $namespace = config('modules.namespace');
             $path = module_path($Module = Str::studly($module),  "$type");
