@@ -62,19 +62,19 @@ class RunSchemaCommand extends Command
         $dbConnect = DB::connection($dbDefault);
         $dbConfigs = $this->dbConfigs($dbDefault);
 
-        if($restore){
+        if ($restore) {
             $this->doRestore($dbConnect, $storage);
         }
 
-        if($backup){
+        if ($backup) {
             $this->doBackup($dbConnect, $dbConfigs, $storage);
         }
 
-        if($database){
+        if ($database) {
             $this->doSchema($dbConnect, $dbConfigs);
         }
 
-        if($migrate){
+        if ($migrate) {
             $this->doMigrations($dbConnect, $dbConfigs);
         }
 
@@ -85,12 +85,12 @@ class RunSchemaCommand extends Command
     {
         $configs = config('database.connections');
 
-        foreach ($configs as $config => $settings){
-            if(Str::contains($config, 'legacy')
+        foreach ($configs as $config => $settings) {
+            if (Str::contains($config, 'legacy')
                 || !($settings['database'] ?? null)
                 || !($settings['username'] ?? null)
                 || !($settings['password'] ?? null)
-            ){
+            ) {
                 unset($configs[$config]);
             }
         }
@@ -103,7 +103,7 @@ class RunSchemaCommand extends Command
         $this->line("------------------------------------------------------");
 
         $backupName = basename($storage);
-        if($this->restore($dbConnect, $storage)){
+        if ($this->restore($dbConnect, $storage)) {
             $this->info('Success in restoring data from '.$backupName);
         } else {
             $this->error('An error occurred while restoring '.$backupName);
@@ -112,14 +112,14 @@ class RunSchemaCommand extends Command
 
     private function restore($dbConnect, $storage = null)
     {
-        if($storage){
+        if ($storage) {
             $storage = realpath(getcwd() . '/' . $storage);
         } else {
             $backupDir = config('database.backup');
             $allBackups = glob($backupDir.'/*/*.sql');
             $storage = realpath(Arr::last($allBackups));
         }
-        if(!$storage){
+        if (!$storage) {
             $this->error('There are no backups to restore from!');
             exit();
         }
@@ -133,16 +133,23 @@ class RunSchemaCommand extends Command
             $this->line('Running database restore ...');
 
             $backupSQL = file_exists($backup)? file_get_contents($backup): 'mysqldump:';
-            if(Str::contains($backupSQL, ['mysqldump:', 'error:'])){
+            if (Str::contains($backupSQL, ['mysqldump:', 'error:'])) {
+                $this->error(__('backup generated has errors)'));
                 return false;
             }
+            if(trim($backupSQL)){
+                $this->error(__('The back up file is empty!'));
+                return false;
+            }
+
+            static $host, $port, $database, $username, $password, $backup;
 
             extract($dbConnect->getConfig());
 
             $this->mysqldump($host, $port, $database, $username, $password, $backup, "<");
 
             return true;
-        } catch (\Exception $ex){
+        } catch (\Exception $ex) {
             $this->error($ex->getMessage());
             return false;
         }
@@ -155,7 +162,7 @@ class RunSchemaCommand extends Command
 
         $backupFile = $this->backup($db, $configs, $storage);
 
-        if($backupFile){
+        if ($backupFile) {
             $this->info("Backup created successfully in $backupFile");
         } else {
             $this->error("Error generating database backup in $storage");
@@ -168,10 +175,10 @@ class RunSchemaCommand extends Command
             ? $dddd = config('database.backup')
             : getcwd() . '/' . $storage;
 
-        $backup_dir = rtrim($backup_dir,'/\\')."/db-".date('Ymd');
+        $backup_dir = rtrim($backup_dir, '/\\')."/db-".date('Ymd');
         $backup = "$backup_dir/bak-".date('His').".sql";
 
-        if(!file_exists($backup_dir)){
+        if (!file_exists($backup_dir)) {
             mkdir($backup_dir, 0644, true);
         }
 
@@ -180,13 +187,13 @@ class RunSchemaCommand extends Command
 
     public function mysqldump($host, $port, $database, $username, $password, $backup, $direct)
     {
-        if(!isset($host) || !isset($port) || !isset($username) || !isset($password)){
+        if (!isset($host) || !isset($port) || !isset($username) || !isset($password)) {
             $this->error('DB configurations are not set or missing details');
             return;
         }
 
         $mysqldump = "mysqldump -h $host -u $username -P $port";
-        if(!empty($password)){
+        if (!empty($password)) {
             $mysqldump .= " -p'$password'";
         }
 
@@ -198,19 +205,22 @@ class RunSchemaCommand extends Command
         $this->info("$command");
         $this->line('<<<');
 
-        return shell_exec( trim($mysqldump) );
+        return shell_exec(trim($mysqldump));
     }
 
     public function backupDB($dbConnect, $backup, $configs, $returnSQL = false)
     {
         // TODO: handle individual configs
         $this->line('Running database backup ...');
+
+        static $host, $port, $database, $username, $password;
+
         extract($dbConnect->getConfig());
 
         $this->mysqldump($host, $port, $database, $username, $password, $backup, ">");
 
         $backupSQL = file_exists($backup)? file_get_contents($backup): 'mysqldump:';
-        if(Str::contains($backupSQL, ['mysqldump:', 'error:'])){
+        if (Str::contains($backupSQL, ['mysqldump:', 'error:'])) {
             return false;
         }
 
@@ -224,7 +234,7 @@ class RunSchemaCommand extends Command
 
         $schemaGeneration = $this->genSchema($db, $configs);
 
-        if($schemaGeneration){
+        if ($schemaGeneration) {
             $this->info("Success in creating database(s) and users");
         } else {
             $this->error("Error generating database(s) or user(s)");
@@ -242,11 +252,10 @@ class RunSchemaCommand extends Command
         }
 
         $dbs = [];
-        foreach ($dbConfigs as $conn => $config){
-
+        foreach ($dbConfigs as $conn => $config) {
             $db = $config['database'];
 
-            if(!in_array($db, $dbs)){
+            if (!in_array($db, $dbs)) {
                 $this->genDBschema($dbConnect, $conn, $config);
                 $dbs[] = $db;
                 $this->info("Done generating db user `$db`");
@@ -255,11 +264,10 @@ class RunSchemaCommand extends Command
         }
 
         $users = [];
-        foreach ($dbConfigs as $conn => $config){
-
+        foreach ($dbConfigs as $conn => $config) {
             $user = $conn.'_'.($u = $config['username']);
 
-            if(!in_array($user, $users)){
+            if (!in_array($user, $users)) {
                 $this->getDBusers($dbConnect, $conn, $config);
                 $users[] = $user;
                 $this->info("Done creating user `$u`");
@@ -274,8 +282,9 @@ class RunSchemaCommand extends Command
     {
         try {
             extract($dbConfigs);
+            static $database, $charset, $collation;
 
-            if($this->option('force')){
+            if ($this->option('force')) {
                 $this->doBackup($CONNECTION, $dbConfigs);
                 $CONNECTION->unprepared("DROP DATABASE IF EXISTS $database;");
             }
@@ -283,8 +292,7 @@ class RunSchemaCommand extends Command
             $CONNECTION->unprepared("CREATE DATABASE IF NOT EXISTS $database CHARACTER SET $charset COLLATE $collation;");
 
             return true;
-
-        } catch (\Exception $ex){
+        } catch (\Exception $ex) {
             $this->error($ex->getMessage());
             return false;
         }
@@ -295,21 +303,23 @@ class RunSchemaCommand extends Command
         extract($dbConfigs);
         $host = '%';
 
+        static $database, $username, $password;
+
         if ($database && $username && $password) {
             $privileges = "SELECT,INSERT,UPDATE,DELETE,CREATE,ALTER,DROP,INDEX,EXECUTE,REFERENCES";
 //            $privileges = "ALL PRIVILEGES";
-            if(Str::startsWith($dbConn, 'dbr_')){
+            if (Str::startsWith($dbConn, 'dbr_')) {
                 $privileges = "SELECT";
-            } elseif(Str::startsWith($dbConn, 'dbw_')){
+            } elseif (Str::startsWith($dbConn, 'dbw_')) {
                 $privileges = "SELECT,INSERT,UPDATE,DELETE";
-            } else{
+            } else {
                 $database = "*";
             }
 
             $this->warn("... run: CREATE USER IF NOT EXISTS '$username'@'%' IDENTIFIED BY '$password';");
             $CONNECTION->unprepared("CREATE USER IF NOT EXISTS '$username'@'%' IDENTIFIED BY '$password';");
 
-            if($username != 'root'){
+            if ($username != 'root') {
                 $this->warn("... GRANT $privileges ON $database.* TO '$username'@'$host'; ...");
                 $CONNECTION->unprepared("GRANT $privileges ON $database.* TO '$username'@'$host';");
             }
@@ -324,7 +334,7 @@ class RunSchemaCommand extends Command
 
         $runMigrations = $this->runMigrations($dbConnect, $dbConfigs);
 
-        if($runMigrations){
+        if ($runMigrations) {
             $this->info("Success in migrating database table(s)");
         } else {
             $this->error("Error migrating database table(s))");
@@ -343,12 +353,12 @@ class RunSchemaCommand extends Command
             $conn = $dbConnect->getConfig('name');
             $this->migrateDB($conn, $isForced);
 
-            foreach ($dbConfigs as $conn => $config){
+            foreach ($dbConfigs as $conn => $config) {
                 $this->migrateDB($conn, $isForced);
             }
 
             return true;
-        } catch (\Excetion $ex){
+        } catch (\Exception $ex) {
             $this->error($ex->getMessage());
             return false;
         }
@@ -360,7 +370,7 @@ class RunSchemaCommand extends Command
             $this->line('---------------------------------------');
             $migrate = $isForced? 'migrate:fresh': 'migrate';
 
-            if(!Str::startsWith($dbConn, 'db_')){
+            if (!Str::startsWith($dbConn, 'db_')) {
                 return true;
             }
 
@@ -372,54 +382,9 @@ class RunSchemaCommand extends Command
 
             $this->line('---------------------------------------');
             return true;
-        } catch (\Excetion $ex){
+        } catch (\Exception $ex) {
             $this->error($ex->getMessage());
             return false;
         }
-    }
-
-    public function install_db($options)
-    {
-        $this->line('-------------------------------------------');
-        $this->line('  Initialize the database  ');
-        $this->line('--------------------------------------------');
-
-
-        if ($options['newdb']) {
-            $database = $this->ask('What is your database name?') ?? 'popcxdb00';
-            $username = $this->ask('What is your database username?') ?? 'popcxusr00';
-            $dbport = $this->ask('What is your database port?') ?? '3306';
-            $password = $this->secret('What is your database password?') ?? 'P0pcxU$r00';
-            $this->local_db($database, $username, $dbport, $password);
-        } else {
-            $CONNECTION = $this->connect_db('root');
-
-            if ($CONNECTION) {
-                $this->create_databases($CONNECTION);
-                $this->disconnect_db($CONNECTION);
-            } else {
-                $this->line('Database connection failed: '.mysqli_connect_error());
-            }
-        }
-        $this->line('Done!');
-        $this->line('');
-    }
-
-    public function local_db($database, $username, $dbport, $password)
-    {
-        $env_data = file_get_contents($env_file = base_path('.env'));
-        if ($database) {
-            $env_data = preg_replace("#(DB_DATABASE\=)(.+?)\s+#si", "$1$database\n", $env_data);
-        }
-        if ($username) {
-            $env_data = preg_replace("#(DB_USERNAME\=)(.+?)\s+#si", "$1$username\n", $env_data);
-        }
-        if ($password) {
-            $env_data = preg_replace("#(DB_PASSWORD\=)(.+?)\s+#si", "$1$password\n", $env_data);
-        }
-        if ($dbport) {
-            $env_data = preg_replace("#(DB_PORT\=)(.+?)\s+#si", "$1$dbport\n", $env_data);
-        }
-        file_put_contents($env_file, $env_data);
     }
 }
