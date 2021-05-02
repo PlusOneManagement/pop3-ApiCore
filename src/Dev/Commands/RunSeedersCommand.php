@@ -57,75 +57,67 @@ class RunSeedersCommand extends Command
         $app_db = realpath(base_path('database') . '/');
         $modules = realpath(config('modules.paths.modules') . '/');
 
-        $seeders = $this->getSeederFiles($modules, $app_db);
-
-        $classes = $this->getSeederClasses($modules, $app_db, $seeders);
-
-        foreach ($classes as $class) {
-            $this->warn("Seeding $class");
-
-            $seedCMD = Str::contains($class, '\\')? 'db:seed': 'module:seed';
-
-            $this->call($seedCMD, ['--class' => $class]);
+        if($fakeSeeds && !$allSeeders){
+            $this->doSeed('db:seed', $app_db, '/seeds/Mock*');
+            $this->doSeed('module:seed', $modules, '/*/*/Seeders/Mock*', true);
+        }
+        if($realSeeds && !$allSeeders){
+            $this->doSeed('db:seed', $app_db, '/seeds/Real*');
+            $this->doSeed('module:seed', $modules, '/*/*/Seeders/Real*', true);
+        }
+        if($allSeeders){
+            $this->call('db:seed');
+            $this->call('module:seed');
         }
 
         endCommand:
         $this->line('======================================================');
     }
 
-    public function getSeedsFrom($dir, $pattern)
+    public function doSeed($command, $dir, $pattern, $isModule = false)
+    {
+        if(!$dir){
+            $this->error('Looks like there  are directories with seeds!');
+            return false;
+        }
+
+        $seeders = $this->getSeedsFrom($dir, $pattern, $isModule);
+
+        foreach ($seeders as $class => $seeder) {
+
+            $commandArgs = [];
+            if($isModule){
+                list($module, $class) = explode(":", $class);
+                $commandArgs['module'] = $module;
+            }
+            $commandArgs['--class'] = $class;
+
+            $this->warn("Seeding $class");
+            $this->call($command, $commandArgs);
+        }
+        return true;
+    }
+
+    public function getSeedsFrom($dir, $pattern, $isModule)
     {
         $seeders = [];
         foreach (glob($dir . $pattern) as $seeder) {
-            $seeders[] = $seeder;
+
+            $class = $this->getSeedClass($dir, $seeder, $isModule);
+            $seeders[$class] = $seeder;
         }
         return $seeders;
     }
 
-    public function getSeederFiles($modules, $app_db)
+    public function getSeedClass($directory, $seeder, $isModule)
     {
-        $fakeSeeds = $this->option('mock') ?? false;
-        $realSeeds = $this->option('real') ?? false;
-        $allSeeders = $this->option('all') ?? false;
+        // TODO: Update this to include namespace starting with laravel 8.*
+        $seedClass = Str::before(basename($seeder), '.php');
 
-        $seeders = [];
-
-        if ($fakeSeeds) {
-            $seeders += $this->getSeedsFrom($app_db, '/seeds/Mock*');
-            $seeders += $this->getSeedsFrom($modules, '/*/*/Seeders/Mock*');
+        if($isModule){
+            $moduleName = Str::of($seeder)->after($directory)->before('Database');
+            $seedClass = trim((string)$moduleName, '/\\') . ":$seedClass";
         }
-
-        if ($realSeeds) {
-            $seeders += $this->getSeedsFrom($app_db, '/seeds/Real*');
-            $seeders += $this->getSeedsFrom($modules, '/*/*/Seeders/Real*');
-        }
-
-        if ($allSeeders) {
-            $seeders += $this->getSeedsFrom($app_db, '/seeds/DatabaseSeeder.php');
-            $seeders += $this->getSeedsFrom($modules, '/*/*/Seeders/*DatabaseSeeder.php');
-        }
-
-        return $seeders;
-    }
-
-    public function getSeederClasses($modules, $app_db, $seeders)
-    {
-        $moduleSpace = config('modules.namespace');
-
-        $seedClasses = [];
-
-        foreach ($seeders as $seeder) {
-            if (Str::startsWith($seeder, $modules)) {
-                $seedClass = $moduleSpace. (Str::after($seeder, $modules));
-                $seedClass = str_ireplace(['/', '.php'], ['\\', ''], $seedClass);
-                $seedClasses[] = class_exists($seedClass)? $seedClass: null;
-            //
-            } elseif (Str::startsWith($seeder, realpath($app_db.'/seeds'))) {
-                $seedClass = Str::before(basename($seeder), '.php');
-                $seedClasses[] = class_exists($seedClass)? $seedClass: null;
-            }
-        }
-
-        return array_unique(array_filter($seedClasses));
+        return trim($seedClass, "/\\");
     }
 }

@@ -56,33 +56,38 @@ class RunSchemaCommand extends Command
         $storage = $this->option('storage');
         $migrate = $this->option('migrate');
 
-        $this->line('======================================================');
+        $LINE = '======================================================';
 
         $dbDefault = config('database.default');
         $dbConnect = DB::connection($dbDefault);
         $dbConfigs = $this->dbConfigs($dbDefault);
 
         if(!$backup && !$database && !$restore && !$storage  && !$migrate){
+            $this->line($LINE);
             $this->error(__('>>> Missing arguments! use --help for usage!'));
         }
 
         if ($restore) {
+            $this->line($LINE);
             $this->doRestore($dbConnect, $storage);
         }
 
         if ($backup) {
+            $this->line($LINE);
             $this->doBackup($dbConnect, $dbConfigs, $storage);
         }
 
         if ($database) {
+            $this->line($LINE);
             $this->doSchema($dbConnect, $dbConfigs);
         }
 
         if ($migrate) {
+            $this->line($LINE);
             $this->doMigrations($dbConnect, $dbConfigs);
         }
 
-        $this->line('======================================================');
+        $this->line($LINE);
     }
 
     public function dbConfigs($dbDefault)
@@ -166,8 +171,10 @@ class RunSchemaCommand extends Command
 
         if ($backupFile) {
             $this->info("Backup created successfully in $backupFile");
+            return true;
         } else {
             $this->error("Error generating database backup in $storage");
+            return false;
         }
     }
 
@@ -187,7 +194,7 @@ class RunSchemaCommand extends Command
         return $this->backupDB($db, $backup, $configs);
     }
 
-    public function mysqldump($host, $port, $database, $username, $password, $backup, $direct)
+    private function mysqldump($host, $port, $database, $username, $password, $backup, $direct)
     {
         if (!isset($host) || !isset($port) || !isset($username) || !isset($password)) {
             $this->error('DB configurations are not set or missing details');
@@ -279,7 +286,7 @@ class RunSchemaCommand extends Command
         return true;
     }
 
-    public function genDBschema($CONNECTION, $dbConn, $dbConfigs)
+    private function genDBschema($CONNECTION, $dbConn, $dbConfigs)
     {
         try {
             static $database, $charset, $collation;
@@ -330,33 +337,51 @@ class RunSchemaCommand extends Command
 
     public function doMigrations($dbConnect, $dbConfigs)
     {
-        $this->line('   Generating Database(s) and User(s)   ');
+        $this->line('   Generate/run database migrations   ');
         $this->line("------------------------------------------------------");
 
-        $runMigrations = $this->runMigrations($dbConnect, $dbConfigs);
+        $isForced = $this->option('force');
 
-        if ($runMigrations) {
+        // If resetting, let's backup the existing database
+        if ($isForced && !$this->doBackup($dbConnect, $dbConfigs)) {
+            $this->error('Could not backup database! We will NOT drop schema!');
+            $shouldWeContinue = __('Do you want to continue migration without backup?');
+            $migrationAnswer = Str::lower($this->ask($shouldWeContinue, ['Y','N']));
+            if($migrationAnswer != 'y' && $migrationAnswer != 'yes'){
+                return false;
+            }
+            // TODO: This will need to be decided for the future
+            // If we cannot backup the database, we will not attempt to drop any db schema
+            $isForced = false;
+        }
+
+        $migrated = $this->migrate($dbConnect, $dbConfigs, $isForced);
+
+        if ($migrated) {
             $this->info("Success in migrating database table(s)");
         } else {
             $this->error("Error migrating database table(s))");
         }
     }
 
-    public function runMigrations($dbConnect, $dbConfigs)
+    public function migrate($dbConnect, $dbConfigs, $isForced = false)
     {
         try {
-            $isForced = $this->option('force');
 
-            if ($isForced) {
-                $this->doBackup($dbConnect, $dbConfigs);
+            $this->line('Running root/nested migrations...');
+
+            // Nested migrations
+            $migrations = database_path('migrations');
+            $migrateCmd = $isForced? 'migrate:fresh': 'migrate';
+            $ranMigrations = $this->runMigrations($migrateCmd, $migrations, $isForced);
+
+            if(!$ranMigrations){
+                $this->migrateDB($migrateCmd, $dbConnect->getConfig('name'), $isForced);
             }
 
-            $conn = $dbConnect->getConfig('name');
-            $this->migrateDB($conn, $isForced);
-
-            foreach ($dbConfigs as $conn => $config) {
-                $this->migrateDB($conn, $isForced);
-            }
+            $this->line('Running module migrations...');
+            $migrateModules = $isForced? 'module:migrate-refresh': 'module:migrate';
+            $this->migrateDB($migrateModules, $dbConnect->getConfig('name'), $isForced);
 
             return true;
         } catch (\Exception $ex) {
@@ -365,21 +390,50 @@ class RunSchemaCommand extends Command
         }
     }
 
-    public function migrateDB($dbConn, $isForced = false)
+    private function runMigrations($CMD, $migrations, $isForced)
+    {
+        $migrationPaths = [];
+        foreach (glob($migrations.'/*/*.php') as $migration){
+            if(is_dir($migration)){
+                continue;
+            }
+            $dbConn = basename($migDir = dirname($migration));
+            $migrationPaths[$dbConn][] = $migration;
+        }
+        if(empty($migrationPaths)){
+            return false;
+        }
+
+        foreach ($migrationPaths as  $dbConn => $migration_path){
+            $this->migrateDB($CMD, $dbConn, $isForced, $migration_path);
+        }
+        return true;
+    }
+
+    public function migrateDB($CMD, $dbConn, $isForced = false, $migrations = null)
     {
         try {
             $this->line('---------------------------------------');
-            $migrate = $isForced? 'migrate:fresh': 'migrate';
 
-            if (!Str::startsWith($dbConn, 'db_')) {
-                return true;
+            if (!Str::startsWith($dbConn, 'db_') && $migrations) {
+                return false;
             }
 
-            $this->warn("Running `$migrate` on the `$dbConn` database connection ...");
-            $this->call($migrate, [
-                '--database' => $dbConn,
+            $migrationsOptions = [
+                '--database' => str_replace(['dbr_', 'dbw_'], 'db_', $dbConn),
                 '--ansi' => $this->option('ansi') ?: true
-            ]);
+            ];
+
+            if($migrations){
+                $migrationsOptions['--path'] = $migrations;
+                $migrationsOptions['--realpath'] = true;
+            }
+
+            $this->warn(">>>");
+            $this->info("`php artisan $CMD ` //connection name: `$dbConn`");
+            $this->warn("<<<");
+
+            $this->call($CMD, $migrationsOptions);
 
             $this->line('---------------------------------------');
             return true;
