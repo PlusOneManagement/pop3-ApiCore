@@ -118,6 +118,7 @@ class RunSeedersCommand extends Command
             $moduleName = Str::of($seeder)->after($directory)->before('Database');
             $seedClass = trim((string)$moduleName, '/\\') . ":$seedClass";
         }
+
         return trim($seedClass, "/\\");
     }
 }
