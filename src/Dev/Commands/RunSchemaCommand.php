@@ -62,6 +62,10 @@ class RunSchemaCommand extends Command
         $dbConnect = DB::connection($dbDefault);
         $dbConfigs = $this->dbConfigs($dbDefault);
 
+        if(!$backup && !$database && !$restore && !$storage  && !$migrate){
+            $this->error(__('>>> Missing arguments! use --help for usage!'));
+        }
+
         if ($restore) {
             $this->doRestore($dbConnect, $storage);
         }
@@ -113,18 +117,18 @@ class RunSchemaCommand extends Command
     private function restore($dbConnect, $storage = null)
     {
         if ($storage) {
-            $storage = realpath(getcwd() . '/' . $storage);
+            $backup = realpath(getcwd() . '/' . $storage);
         } else {
             $backupDir = config('database.backup');
             $allBackups = glob($backupDir.'/*/*.sql');
-            $storage = realpath(Arr::last($allBackups));
+            $backup = realpath(Arr::last($allBackups));
         }
-        if (!$storage) {
+        if (!$backup) {
             $this->error('There are no backups to restore from!');
-            exit();
+            return false;
         }
 
-        return $this->restoreDB($dbConnect, $storage);
+        return $this->restoreDB($dbConnect, $backup);
     }
 
     public function restoreDB($dbConnect, $backup)
@@ -133,18 +137,16 @@ class RunSchemaCommand extends Command
             $this->line('Running database restore ...');
 
             $backupSQL = file_exists($backup)? file_get_contents($backup): 'mysqldump:';
-            if (Str::contains($backupSQL, ['mysqldump:', 'error:'])) {
-                $this->error(__('backup generated has errors)'));
-                return false;
-            }
-            if(trim($backupSQL)){
-                $this->error(__('The back up file is empty!'));
+            if (Str::contains($backupSQL, ['mysqldump:', 'error:']) || !trim($backupSQL)) {
+                $this->error(sprintf(
+                    __(">>> The backup file '%s' has errors or is empty"),
+                    basename($backup)
+                ));
                 return false;
             }
 
             static $host, $port, $database, $username, $password, $backup;
-
-            extract($dbConnect->getConfig());
+            extract($dbConnect->getConfig(), EXTR_OVERWRITE);
 
             $this->mysqldump($host, $port, $database, $username, $password, $backup, "<");
 
@@ -198,12 +200,12 @@ class RunSchemaCommand extends Command
         }
 
         $flags =" --compact --no-create-info --column-statistics=0 --replace";
-        $mysqldump .= "$flags $database $direct $backup 2>&1 &";
+        $mysqldump .= "$flags $database $direct $backup";
 
-        $this->line('>>>');
+        $this->warn('>>>');
         $command = str_ireplace("-p'$password'", "-p'[HIDDEN]'", $mysqldump);
         $this->info("$command");
-        $this->line('<<<');
+        $this->warn('<<<');
 
         return shell_exec(trim($mysqldump));
     }
@@ -214,8 +216,7 @@ class RunSchemaCommand extends Command
         $this->line('Running database backup ...');
 
         static $host, $port, $database, $username, $password;
-
-        extract($dbConnect->getConfig());
+        extract($dbConnect->getConfig(), EXTR_OVERWRITE);
 
         $this->mysqldump($host, $port, $database, $username, $password, $backup, ">");
 
@@ -281,8 +282,8 @@ class RunSchemaCommand extends Command
     public function genDBschema($CONNECTION, $dbConn, $dbConfigs)
     {
         try {
-            extract($dbConfigs);
             static $database, $charset, $collation;
+            extract($dbConfigs, EXTR_OVERWRITE);
 
             if ($this->option('force')) {
                 $this->doBackup($CONNECTION, $dbConfigs);
@@ -300,10 +301,10 @@ class RunSchemaCommand extends Command
 
     public function getDBusers($CONNECTION, $dbConn, $dbConfigs)
     {
-        extract($dbConfigs);
-        $host = '%';
-
         static $database, $username, $password;
+        extract($dbConfigs, EXTR_OVERWRITE);
+
+        $host = '%';
 
         if ($database && $username && $password) {
             $privileges = "SELECT,INSERT,UPDATE,DELETE,CREATE,ALTER,DROP,INDEX,EXECUTE,REFERENCES";

@@ -45,9 +45,14 @@ class RunSeedersCommand extends Command
     {
         $this->line('======================================================');
 
-        $fakeSeeds = $this->option('mock') ?? false;
-        $realSeeds = $this->option('real') ?? false;
-        $allSeeders = $this->option('all') ?? false;
+        $fakeSeeds = $this->option('mock');
+        $realSeeds = $this->option('real');
+        $allSeeders = $this->option('all') ;
+
+        if (!$fakeSeeds && !$realSeeds && !$allSeeders) {
+            $this->error(__('>>> Missing options in the command! Add --help for usage!'));
+            goto endCommand;
+        }
 
         $app_db = realpath(base_path('database') . '/');
         $modules = realpath(config('modules.paths.modules') . '/');
@@ -64,7 +69,7 @@ class RunSeedersCommand extends Command
             $this->call($seedCMD, ['--class' => $class]);
         }
 
-
+        endCommand:
         $this->line('======================================================');
     }
 
