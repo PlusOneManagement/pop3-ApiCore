@@ -57,15 +57,15 @@ class RunSeedersCommand extends Command
         $app_db = realpath(base_path('database') . '/');
         $modules = realpath(config('modules.paths.modules') . '/');
 
-        if($fakeSeeds && !$allSeeders){
+        if ($fakeSeeds && !$allSeeders) {
             $this->doSeed('db:seed', $app_db, '/seeds/Mock*');
             $this->doSeed('module:seed', $modules, '/*/*/Seeders/Mock*', true);
         }
-        if($realSeeds && !$allSeeders){
+        if ($realSeeds && !$allSeeders) {
             $this->doSeed('db:seed', $app_db, '/seeds/Real*');
             $this->doSeed('module:seed', $modules, '/*/*/Seeders/Real*', true);
         }
-        if($allSeeders){
+        if ($allSeeders) {
             $this->call('db:seed');
             $this->call('module:seed');
         }
@@ -76,7 +76,7 @@ class RunSeedersCommand extends Command
 
     public function doSeed($command, $dir, $pattern, $isModule = false)
     {
-        if(!$dir){
+        if (!$dir) {
             $this->error('Looks like there  are directories with seeds!');
             return false;
         }
@@ -84,9 +84,8 @@ class RunSeedersCommand extends Command
         $seeders = $this->getSeedsFrom($dir, $pattern, $isModule);
 
         foreach ($seeders as $class => $seeder) {
-
             $commandArgs = [];
-            if($isModule){
+            if ($isModule) {
                 list($module, $class) = explode(":", $class);
                 $commandArgs['module'] = $module;
             }
@@ -102,7 +101,6 @@ class RunSeedersCommand extends Command
     {
         $seeders = [];
         foreach (glob($dir . $pattern) as $seeder) {
-
             $class = $this->getSeedClass($dir, $seeder, $isModule);
             $seeders[$class] = $seeder;
         }
@@ -114,7 +112,7 @@ class RunSeedersCommand extends Command
         // TODO: Update this to include namespace starting with laravel 8.*
         $seedClass = Str::before(basename($seeder), '.php');
 
-        if($isModule){
+        if ($isModule) {
             $moduleName = Str::of($seeder)->after($directory)->before('Database');
             $seedClass = trim((string)$moduleName, '/\\') . ":$seedClass";
         }
