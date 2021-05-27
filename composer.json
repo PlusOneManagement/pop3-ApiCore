@@ -15,6 +15,9 @@
         "league/flysystem-aws-s3-v3": ">=1.0",
         "league/flysystem-cached-adapter": ">=1.0"
     },
+    "require-dev": {
+        "nwidart/laravel-modules": "*"
+    },
     "extra": {
         "laravel": {
             "providers": [

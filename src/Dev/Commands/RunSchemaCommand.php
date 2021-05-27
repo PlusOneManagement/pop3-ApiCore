@@ -314,8 +314,8 @@ class RunSchemaCommand extends Command
         $host = '%';
 
         if ($database && $username && $password) {
-            $privileges = "SELECT,INSERT,UPDATE,DELETE,CREATE,ALTER,DROP,INDEX,EXECUTE,REFERENCES";
-//            $privileges = "ALL PRIVILEGES";
+            //$privileges = "SELECT,INSERT,UPDATE,DELETE,CREATE,ALTER,DROP,INDEX,EXECUTE,REFERENCES";
+            $privileges = "ALL PRIVILEGES";
             if (Str::startsWith($dbConn, 'dbr_')) {
                 $privileges = "SELECT";
             } elseif (Str::startsWith($dbConn, 'dbw_')) {
@@ -377,6 +377,10 @@ class RunSchemaCommand extends Command
 
             if(!$ranMigrations){
                 $this->migrateDB($migrateCmd, $dbConnect->getConfig('name'), $isForced);
+            }
+
+            if(empty(config('module'))){
+                return true;
             }
 
             $this->line('Running module migrations...');
