@@ -51,6 +51,17 @@ class MacroServiceProvider extends ServiceProvider
         Builder::macro('toList', function (Model $model = null) use ($self) {
             return $self->returnExpectedResponse($model ?: $this);
         });
+
+        Builder::macro('toList', function (Collection $collection = null) use ($self) {
+            return $self->returnExpectedCollection($collection ?: $this);
+        });
+    }
+
+    public function returnExpectedCollection($collection)
+    {
+        return ($limit = request('limit'))
+            ? $collection->paginate($limit)
+            : $collection;
     }
 
     public function returnExpectedResponse($model)
