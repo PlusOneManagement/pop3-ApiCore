@@ -251,7 +251,6 @@ class RunSchemaCommand extends Command
 
     public function genSchema($dbConnect, $dbConfigs)
     {
-        dump(file_exists($modules = base_path('modules'))
         if (file_exists($modules = base_path('modules'))) {
             foreach (glob($modules."/*") as $module_path) {
                 $module_name = strtolower(basename($module_path));
