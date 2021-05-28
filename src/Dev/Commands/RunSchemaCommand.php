@@ -181,7 +181,7 @@ class RunSchemaCommand extends Command
     public function backup($db, $configs, $storage = null)
     {
         $backup_dir = is_null($storage)
-            ? $dddd = config('database.backup')
+            ? config('database.backup')
             : getcwd() . '/' . $storage;
 
         $backup_dir = rtrim($backup_dir, '/\\')."/db-".date('Ymd');
@@ -251,6 +251,7 @@ class RunSchemaCommand extends Command
 
     public function genSchema($dbConnect, $dbConfigs)
     {
+        dump(file_exists($modules = base_path('modules'))
         if (file_exists($modules = base_path('modules'))) {
             foreach (glob($modules."/*") as $module_path) {
                 $module_name = strtolower(basename($module_path));
@@ -379,7 +380,7 @@ class RunSchemaCommand extends Command
                 $this->migrateDB($migrateCmd, $dbConnect->getConfig('name'), $isForced);
             }
 
-            if(empty(config('module'))){
+            if(empty(config('modules'))){
                 return true;
             }
 
