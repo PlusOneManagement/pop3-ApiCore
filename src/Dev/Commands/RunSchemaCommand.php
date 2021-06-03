@@ -319,9 +319,7 @@ class RunSchemaCommand extends Command
             if (Str::startsWith($dbConn, 'dbr_')) {
                 $privileges = "SELECT";
             } elseif (Str::startsWith($dbConn, 'dbw_')) {
-                $privileges = "SELECT,INSERT,UPDATE,DELETE";
-            } else {
-                $database = "*";
+                $privileges = "SELECT,INSERT,UPDATE,DELETE,INDEX,ALTER";
             }
 
             $this->warn("... run: CREATE USER IF NOT EXISTS '$username'@'%' IDENTIFIED BY '$password';");
