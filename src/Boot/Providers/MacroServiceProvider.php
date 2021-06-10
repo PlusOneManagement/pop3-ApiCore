@@ -44,6 +44,8 @@ class MacroServiceProvider extends ServiceProvider
         });
 
         $self = $this;
+
+
         Builder::macro('getList', function (Model $model = null) use ($self) {
             return $self->returnExpectedResponse($model ?: $this);
         });
@@ -51,8 +53,14 @@ class MacroServiceProvider extends ServiceProvider
         Builder::macro('toList', function (Model $model = null) use ($self) {
             return $self->returnExpectedResponse($model ?: $this);
         });
+        Builder::macro('toPage', function (Model $model = null) use ($self) {
+            return $self->returnExpectedResponse($model ?: $this);
+        });
 
-        Builder::macro('toList', function (Collection $collection = null) use ($self) {
+        Collection::macro('toList', function (Collection $collection = null) use ($self) {
+            return $self->returnExpectedCollection($collection ?: $this);
+        });
+        Collection::macro('toPage', function (Collection $collection = null) use ($self) {
             return $self->returnExpectedCollection($collection ?: $this);
         });
     }
