@@ -55,11 +55,11 @@ class MakeClassCommand extends Command
 
         $class = $this->argument('name');
         $type = ucwords($this->option('type') ?: 'services');
-        if($module = $this->argument('module')){
+        if ($module = $this->argument('module')) {
             $namespace = config('modules.namespace');
-            $path = module_path($Module = Str::studly($module),  "$type");
+            $path = module_path($Module = Str::studly($module), "$type");
             $namespace = ($this->option('namespace') ?: "$namespace\\$Module\\$type") ."\\";
-        } else{
+        } else {
             $path  = base_path($this->option('path') ?: "app/$type");
             $namespace = ($this->option('namespace') ?: "App\\$type") ."\\";
         }
@@ -67,10 +67,10 @@ class MakeClassCommand extends Command
         $classPath = $path .$DS. $class;
         $className = ucwords(trim(dirname($class), '.'));
 
-        $namespace .= preg_replace("#(\\\/)+#msi","\\", $className);
+        $namespace .= preg_replace("#(\\\/)+#msi", "\\", $className);
 
         $stub = base_path('stubs/custom/Class.stub');
-        if(!realpath($stub)) {
+        if (!realpath($stub)) {
             $stub = base_path('core/lib/stubs/Class.stub');
         }
 
@@ -80,14 +80,14 @@ class MakeClassCommand extends Command
 
 
         $classDir = str_replace(['/','\\'], $DS, $classDir);
-        if(!file_exists($classDir)){
+        if (!file_exists($classDir)) {
             if (!mkdir($classDir, 0775, true) && !is_dir($classDir)) {
                 throw new \RuntimeException(sprintf('Directory "%s" was not created', $classDir));
             }
         }
 
         $classPath .= '.php';
-        if(file_exists($classPath)){
+        if (file_exists($classPath)) {
             $this->line("... Class, '$class' already exists!");
             return;
         }
@@ -97,7 +97,7 @@ class MakeClassCommand extends Command
         $CLASS_DATA = str_replace([
             '$CLASS_NAME$', '$NAMESPACE$'
         ], [
-            $className, trim($namespace,'/\\')
+            $className, trim($namespace, '/\\')
         ], $STUB_DATA);
 
         file_put_contents($classPath, $CLASS_DATA);
