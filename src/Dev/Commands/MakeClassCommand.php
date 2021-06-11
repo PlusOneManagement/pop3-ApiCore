@@ -22,8 +22,8 @@ class MakeClassCommand extends Command
     protected $signature = 'make:class
         {name : name of the class to be created}
         {module? : name of the modules to be created in}
-        {--p|path= : Location where the class will be added to: defaults to Services}
         {--t|type= : The type of class will determine what folder, e.g. Observer, etc.}
+        {--p|path= : Location where the class will be added to: defaults to Services}
         {--namespace= : The namespace to create the Class in in}';
 
     /**
