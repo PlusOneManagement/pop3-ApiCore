@@ -68,7 +68,7 @@ trait ExtendsDBSchema
    {
       Schema::disableForeignKeyConstraints();
       $foreignID = $table->foreignId($fieldName)->constrained($foreignTable, $foreignKey);
-      return $foreignID->onUpdateCascade();
+      return $foreignID->onUpdateCascade()->onDeleteCascade();
    }
    
    /**
@@ -84,7 +84,7 @@ trait ExtendsDBSchema
    {
       Schema::disableForeignKeyConstraints();
       $foreignID = $table->foreignId($fieldName)->nullable()->constrained($foreignTable, $foreignKey);
-      return $foreignID->onUpdateCascade();
+      return $foreignID->onUpdate('cascade')->onDelete('cascade');
    }
    /**
     * Adds our common users who perform the add, update or delete actions on a given record
