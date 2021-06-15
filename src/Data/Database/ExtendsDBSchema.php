@@ -62,11 +62,15 @@ trait ExtendsDBSchema
            $foreign = $foreign->nullable();
        }
 
-       if($foreignTable ){
-           $foreign = $foreign->references($foreignKey)->on($foreignTable);
+       if(!$foreignTable){
+           $foreignTable = (string) Str::of($fieldName)->before('_id')->plural();
        }
 
-       return $foreign->onDelete('cascade')->onUpdate('cascade');
+       return $foreign
+               ->references($foreignKey)
+               ->on($foreignTable)
+               ->onDelete('cascade')
+               ->onUpdate('cascade');
 
    }
    
