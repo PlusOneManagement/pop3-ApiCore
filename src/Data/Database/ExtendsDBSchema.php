@@ -149,12 +149,12 @@ trait ExtendsDBSchema
     * $nullable = 1 means only bu_unit_id is nullable;
     *
     * @param Blueprint $table
-    * @param undefined $fields
+    * @param int $fields
     * @param integer $nullable
     *
     * @return Blueprint
     */
-   public function businessIdentity(Blueprint $table, $fields = -1, $nullable = -1): Blueprint
+   public function businessIdentity(Blueprint $table, int $fields = -1, $nullable = -1): Blueprint
    {
       if ($fields == -1 || $fields == 0) {
          
