@@ -68,7 +68,7 @@ trait ExtendsDBSchema
    {
       Schema::disableForeignKeyConstraints();
       $foreignID = $table->foreignId($fieldName)->constrained($foreignTable, $foreignKey);
-      return $foreignID->onUpdateCascade()->onDeleteCascade();
+      return $foreignID->onUpdate('cascade')->onDelete('cascade');
    }
    
    /**
