@@ -53,6 +53,22 @@ trait ExtendsDBSchema
     * @var string
     */
    public $deleted_by = 'deleted_by_id';
+
+   public function foreign($table, $fieldName, $nullable = false, $foreignKey = "id", $foreignTable = null)
+   {
+       $foreign = $table->foreign($fieldName);
+
+       if($nullable){
+           $foreign = $foreign->nullable();
+       }
+
+       if($foreignTable ){
+           $foreign = $foreign->references($foreignKey)->on($foreignTable);
+       }
+
+       return $foreign->onDelete('cascade')->onUpdate('cascade');
+
+   }
    
    /**
     * Simplifies adding foreign key relationships
@@ -64,6 +80,7 @@ trait ExtendsDBSchema
     *
     * @return ColumnDefinition
     */
+
    public function foreignId(Blueprint $table, $fieldName, $foreignKey = "id", $foreignTable = null): ForeignKeyDefinition
    {
       Schema::disableForeignKeyConstraints();
