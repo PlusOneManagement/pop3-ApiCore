@@ -36,7 +36,7 @@ class CoreServiceProvider extends ServiceProvider
         $this->registerCommands();
 
         $this->mergeConfigFrom(
-            __DIR__.'/../config/core.php', 'core'
+            __DIR__.'/../../Conf/core.php', 'core'
         );
 
     }
