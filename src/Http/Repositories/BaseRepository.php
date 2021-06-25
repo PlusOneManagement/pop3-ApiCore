@@ -64,11 +64,11 @@ class BaseRepository
     public function create(Request $request, Model $model)
     {
         try {
-            $data = $this->createNew($request->all(), $model);
+            $this->data = $this->createNew($request->all(), $model);
 
             $this->setResult([
                 'message' => __('Successfully created new record(s)'),
-                'data' => $data,
+                'data' => $this->data,
             ]);
             //
         } catch (\Exception $ex) {
@@ -86,11 +86,11 @@ class BaseRepository
     {
         try {
             $input = $request->except('orphaned_at', 'deleted_at');
-            $Model = $this->updateOne($input, $model);
-            $this->setResult([
+            $this->data = $this->updateOne($input, $model);
+                $this->setResult([
                 'status' => 201,
                 'message' => __('Successfully updated new records!'),
-                'data' => Arr::except($Model->toArray(), 'fields'),
+                'data' => Arr::except($this->data->toArray(), 'fields'),
             ]);
             //
         } catch (\Exception $ex) {
@@ -112,9 +112,10 @@ class BaseRepository
             } else {
                 $model->delete();
             }
-            $this->setResult([
+            $this->data = $model;
+                $this->setResult([
                 'message' =>  __('Successfully archived record(s)'),
-                'data' => $model->toArray(),
+                'data' => $this->data->toArray(),
             ]);
             //
         } catch (\Exception $ex) {
