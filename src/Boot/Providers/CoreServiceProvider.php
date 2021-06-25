@@ -6,9 +6,9 @@ use Core\Dev\Commands\MakeClassCommand;
 use Core\Dev\Commands\MakeTraitCommand;
 use Core\Dev\Commands\RunSchemaCommand;
 use Core\Dev\Commands\RunSeedersCommand;
-use Illuminate\Support\ServiceProvider;
 use Core\Dev\Commands\RunInstallCommand;
 use Core\Dev\Commands\MakeRepoCommand;
+use Illuminate\Support\ServiceProvider;
 
 class CoreServiceProvider extends ServiceProvider
 {

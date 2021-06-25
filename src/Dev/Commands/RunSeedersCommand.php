@@ -77,7 +77,7 @@ class RunSeedersCommand extends Command
     public function doSeed($command, $dir, $pattern, $isModule = false)
     {
         if (!$dir) {
-            $this->error('Looks like there  are directories with seeds!');
+            $this->error('Looks like there are no directories with seeds!');
             return false;
         }
 

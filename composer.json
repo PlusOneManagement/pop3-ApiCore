@@ -19,7 +19,8 @@
         "laravel": {
             "providers": [
                 "Core\\Boot\\Providers\\CoreServiceProvider",
-                "Core\\Boot\\Providers\\MacroServiceProvider"
+                "Core\\Boot\\Providers\\MacroServiceProvider",
+                "Core\\Boot\\Providers\\EventServiceProvider"
             ],
             "aliases": {
                 "Core": "Core\\Mock\\Facades"
