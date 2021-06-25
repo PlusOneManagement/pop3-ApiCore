@@ -33,7 +33,11 @@ class CoreServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        return $this->registerCommands();
+        $this->registerCommands();
+
+        $this->mergeConfigFrom(
+            __DIR__.'/../config/core.php', 'core'
+        );
 
     }
 
@@ -52,7 +56,6 @@ class CoreServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        parent::boot();
         //
         $this->publishes([
             __DIR__.'/../../../lib/stubs' => base_path('stubs/custom'),
