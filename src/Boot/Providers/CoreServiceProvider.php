@@ -9,7 +9,6 @@ use Core\Dev\Commands\RunSeedersCommand;
 use Illuminate\Support\ServiceProvider;
 use Core\Dev\Commands\RunInstallCommand;
 use Core\Dev\Commands\MakeRepoCommand;
-use Illuminate\Support\Str;
 
 class CoreServiceProvider extends ServiceProvider
 {
@@ -53,6 +52,7 @@ class CoreServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        parent::boot();
         //
         $this->publishes([
             __DIR__.'/../../../lib/stubs' => base_path('stubs/custom'),
