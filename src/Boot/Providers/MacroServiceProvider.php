@@ -8,6 +8,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 
 class MacroServiceProvider extends ServiceProvider
 {
@@ -43,26 +44,21 @@ class MacroServiceProvider extends ServiceProvider
             );
         });
 
-        $self = $this;
+        $methods = ['getList', 'toList', 'toPage'];
 
+        foreach ($methods as $method){
+            $self = $this;
 
-        Builder::macro('getList', function (Model $model = null) use ($self) {
-            return $self->returnExpectedResponse($model ?: $this);
-        });
-
-        Builder::macro('toList', function (Model $model = null) use ($self) {
-            return $self->returnExpectedResponse($model ?: $this);
-        });
-        Builder::macro('toPage', function (Model $model = null) use ($self) {
-            return $self->returnExpectedResponse($model ?: $this);
-        });
-
-        Collection::macro('toList', function (Collection $collection = null) use ($self) {
-            return $self->returnExpectedCollection($collection ?: $this);
-        });
-        Collection::macro('toPage', function (Collection $collection = null) use ($self) {
-            return $self->returnExpectedCollection($collection ?: $this);
-        });
+            Builder::macro($method, function (Model $model = null) use (&$self) {
+                return $self->returnExpectedResponse($model ?: $this);
+            });
+            Collection::macro($method, function (Collection $collection = null) use (&$self) {
+                return $self->returnExpectedCollection($collection ?: $this);
+            });
+            EloquentCollection::macro($method, function (Collection $collection = null) use (&$self) {
+                return $self->returnExpectedCollection($collection ?: $this);
+            });
+        }
     }
 
     public function returnExpectedCollection($collection)
