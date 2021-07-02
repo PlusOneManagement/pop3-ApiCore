@@ -11,7 +11,7 @@ use Illuminate\Support\Str;
 trait AppendsDefinedRelationships
 {
 
-    public function bootAppendsDefinedRelationships()
+    public static function bootAppendsDefinedRelationships()
     {
 
     }

@@ -18,6 +18,11 @@ trait AddsParentChildRelationships
      */
     protected $depth = 10;
 
+    public static function bootAddsParentChildRelationships()
+    {
+
+    }
+
     /**
      * The key used to determine the parent-child relationship
      *
