@@ -269,4 +269,9 @@ trait ExtendsDBSchema
       }
       return $table;
    }
+
+    public function addColumns($table, ...$columns)
+    {
+        return $table;
+    }
 }

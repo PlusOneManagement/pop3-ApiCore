@@ -2,14 +2,20 @@
 
 namespace Core\Data\Relations;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Str;
-use Illuminate\Support\Collection;
 
 /**
  *
  */
 trait AppendsDefinedRelationships
 {
+
+    public function bootAppendsDefinedRelationships()
+    {
+
+    }
+
     public function getRelationshipsAttribute()
     {
         $relationships = new Collection();
