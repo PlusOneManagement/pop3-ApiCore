@@ -5,6 +5,7 @@ namespace Core\Data\Models;
 // use Core\Data\Models\Model as BaseModel;
 use Core\Http\Resources\FiltersResource;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Database\Eloquent\Model as BaseModel;
 use Illuminate\Support\Facades\DB;
 
@@ -13,10 +14,10 @@ abstract class Model extends BaseModel
     use FiltersResource;
 
     /**
-    * The database table prefix for this model
-    *
-    * @var string
-    */
+     * The database table prefix for this model
+     *
+     * @var string
+     */
     protected $prefix;
 
     /**
@@ -29,7 +30,7 @@ abstract class Model extends BaseModel
     public function __construct(array $attributes = [])
     {
         if (isset($this->prefix)) {
-            $this->table = $this->prefix.$this->table;
+            $this->table = $this->prefix . $this->table;
 
             /* TODO: We can use the following for migrations */
             $database = Config::get('database');
@@ -45,17 +46,27 @@ abstract class Model extends BaseModel
     {
         $result = $this->filtered($filters);
 
-        if($limit > 0){
+        if ($limit > 0) {
             return $result->paginate($limit);
         }
-        return $limit < 0? $result->get(): $result->cursor();
+        return $limit < 0 ? $result->get() : $result->cursor();
     }
 
     public static function getColumns()
     {
-        return ($self = new static)
+        $cacheKey = 'columns_' . static::class;
+
+        if (Cache::has($cacheKey)) {
+            return Cache::get($cacheKey);
+        }
+
+        $columns = ($self = new static)
             ->getConnection()
             ->getSchemaBuilder()
             ->getColumnListing($self->getTable());
+
+        Cache::put($cacheKey, $columns, 60);
+
+        return $columns;
     }
 }

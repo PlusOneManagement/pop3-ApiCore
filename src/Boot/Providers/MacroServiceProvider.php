@@ -46,7 +46,7 @@ class MacroServiceProvider extends ServiceProvider
 
         $methods = ['getList', 'toList', 'toPage'];
 
-        foreach ($methods as $method){
+        foreach ($methods as $method) {
             $self = $this;
 
             Builder::macro($method, function (Model $model = null) use (&$self) {
