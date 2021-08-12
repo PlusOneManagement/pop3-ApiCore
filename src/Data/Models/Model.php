@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Database\Eloquent\Model as BaseModel;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 abstract class Model extends BaseModel
 {
@@ -54,13 +55,14 @@ abstract class Model extends BaseModel
 
     public static function getColumns()
     {
-        $cacheKey = 'columns_' . static::class;
+        $fromClass = 'columns_cache_' . (Str::of(static::class)->kebab()->lower());
+        $cacheKey = preg_replace("#([-\_\\\]+)#msi", "_", $fromClass);
 
         if (Cache::has($cacheKey)) {
             return Cache::get($cacheKey);
         }
 
-        $columns = ($self = new static)
+        $columns = ($self = new static())
             ->getConnection()
             ->getSchemaBuilder()
             ->getColumnListing($self->getTable());
