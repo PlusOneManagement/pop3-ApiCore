@@ -16,7 +16,10 @@ trait ExtendsResource
         $with = is_array($request->with) ?
             $request->with : explode(",", $request->with);
 
-        $resource += [$this->mergeWhen(count($with) > 0, $this->load($with))];
+        //$resource += [$this->mergeWhen(count($with) > 0, $this->load($with))];
+        if(count($with) > 0){
+            $resource += $this->with($with);
+        }
 
         return $resource;
     }
