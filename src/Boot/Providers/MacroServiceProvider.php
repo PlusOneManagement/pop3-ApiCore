@@ -3,11 +3,12 @@
 
 namespace Core\Boot\Providers;
 
-use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\LazyCollection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 
 class MacroServiceProvider extends ServiceProvider
@@ -55,7 +56,10 @@ class MacroServiceProvider extends ServiceProvider
             Collection::macro($method, function (Collection $collection = null) use (&$self) {
                 return $self->returnExpectedCollection($collection ?: $this);
             });
-            EloquentCollection::macro($method, function (Collection $collection = null) use (&$self) {
+            EloquentCollection::macro($method, function (EloquentCollection $collection = null) use (&$self) {
+                return $self->returnExpectedCollection($collection ?: $this);
+            });
+            LazyCollection::macro($method, function (LazyCollection $collection = null) use (&$self) {
                 return $self->returnExpectedCollection($collection ?: $this);
             });
         }
