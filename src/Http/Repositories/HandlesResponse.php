@@ -10,12 +10,18 @@ use PDOException;
 trait HandlesResponse
 {
     protected $result;
-   
+
+
+    public function event($event)
+    {
+        $this->event = $event;
+    }
+
     public function recordType($model)
     {
 //      return Str::lower($model->getTable());
     }
-   
+
     public function setResult($key, $value = null)
     {
         if (is_array($key)) {
@@ -24,23 +30,21 @@ trait HandlesResponse
             }
         } elseif ($value) {
             $this->result[$key] = $value;
-        } else {
-            return;
         }
+        return $this;
     }
 
     public function setEmptyResult($request)
     {
-        $this->setResult([
+        return $this->setResult([
             'status' => 400,
             'message' => __('Empty request sent to the server!'),
             'data' => $request->all(),
         ]);
-        return $this;
     }
 
 
-   
+
     public function setException(\Exception $exception)
     {
         $status = $exception->getCode();
@@ -51,21 +55,23 @@ trait HandlesResponse
             http_response_code($status = 500);
             $message = (string) Str::of($message)->after(':')->before('(')->trim();
         }
-      
+
         if (config('app.env') == 'production') {
             $trace = [];
         }
-      
-        $this->setResult(compact('status', 'message', 'trace'));
-        return $this;
+
+        return $this->setResult(compact('status', 'message', 'trace'));
     }
-   
+
     public function getResult($key =  null)
     {
         $response = $this->result[$key] ?? $this->result;
         $status = ((int) $this->result['status']) ?: 500;
         if (!$status || $status > 599 || is_string($status)) {
             $status = 500;
+        }
+        if($this->event){
+            event($this->even);
         }
         return response()->json($response, $status);
     }
