@@ -10,11 +10,12 @@ use PDOException;
 trait HandlesResponse
 {
     protected $result;
+    protected $events;
 
 
-    public function event($event)
+    public function event($event, $type = 'pre')
     {
-        $this->event = $event;
+        $this->events[$type] = $event;
     }
 
     public function recordType($model)
@@ -56,7 +57,8 @@ trait HandlesResponse
             $message = (string) Str::of($message)->after(':')->before('(')->trim();
         }
 
-        if (config('app.env') == 'production') {
+        $appEnv = config('app.env');
+        if ($appEnv && in_array($appEnv, ['production', 'prod', 'live'])) {
             $trace = [];
         }
 
@@ -69,9 +71,6 @@ trait HandlesResponse
         $status = ((int) $this->result['status']) ?: 500;
         if (!$status || $status > 599 || is_string($status)) {
             $status = 500;
-        }
-        if($this->event){
-            event($this->even);
         }
         return response()->json($response, $status);
     }

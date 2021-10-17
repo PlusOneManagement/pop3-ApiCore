@@ -206,7 +206,7 @@ class RunSchemaCommand extends Command
             $mysqldump .= " -p'$password'";
         }
 
-        $flags =" --compact --no-create-info --column-statistics=0 --replace";
+        $flags =" --all-databases --triggers --routines --events --compact --no-create-info --column-statistics=0 --replace";
         $mysqldump .= "$flags $database $direct $backup";
 
         $this->warn('>>>');
