@@ -3,9 +3,10 @@
 
 namespace Core\Http\Repositories;
 
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOneOrMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use function Webmozart\Assert\Tests\StaticAnalysis\methodExists;
 
 trait AssociatesRelations
@@ -31,10 +32,24 @@ trait AssociatesRelations
         return $this;
     }
 
+    /**
+     * Perform a specified relationship action on the given records.
+     * @param HasOneOrMany|BelongsToMany $Model
+     * @param array $data the relationship object to associate
+     * @param $message Message to return to the API user
+     * @return $this->result
+     */
     public function action($action, $Model, $data, $message)
     {
-        $invalid = __("Invalid action $action on the model");
+        $model = $Model->getModel() ?? $Model;
+        $invalid = __("Invalid action $action on the model $model");
         abort_if(!method_exists($Model, $action), 500, $invalid);
+
+        $records = $model->getTable() ?? 'records';
+        $message = str_ireplace(':records', $records, $message);
+
+        $result = $Model->$action($data) ?: $data;
+        return $this->associateRelation($result, $message);
 
         return $this->associateRelation($Model->$action($data), $message);
     }
