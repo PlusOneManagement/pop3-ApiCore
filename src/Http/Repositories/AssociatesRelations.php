@@ -33,8 +33,15 @@ trait AssociatesRelations
 
     public function action($action, $Model, $data, $message)
     {
-        $invalid = __("Invalid action $action on the model");
+        $model = $Model->getModel() ?? $Model;
+        $invalid = __("Invalid action $action on the model $model");
         abort_if(!method_exists($Model, $action), 500, $invalid);
+
+        $records = $model->getTable() ?? 'records';
+        $message = str_ireplace(':records', $records, $message);
+
+        $result = $Model->$action($data) ?: $data;
+        return $this->associateRelation($result, $message);
 
         return $this->associateRelation($Model->$action($data), $message);
     }
