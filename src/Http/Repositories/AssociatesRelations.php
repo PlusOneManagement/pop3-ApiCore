@@ -34,9 +34,10 @@ trait AssociatesRelations
     public function action($action, $Model, $data, $message)
     {
         $invalid = __("Invalid action $action on the model");
-        abort_if(!method_exists($Model, $action), 500, $invalid);
+        \abort_if(!method_exists($Model, $action), 500, $invalid);
 
-        return $this->associateRelation($Model->$action($data), $message);
+        $result = $Model->$action($data) ?? null;
+        return $this->associateRelation($result ?: $data, $message);
     }
 
     public function attach(BelongsToMany $Model, $data)
