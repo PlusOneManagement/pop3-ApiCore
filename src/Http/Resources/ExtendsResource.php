@@ -50,12 +50,14 @@ trait ExtendsResource
      */
     protected function getExtraFields($request, $resource)
     {
+        if(!$request->filled('extra')){
+            return $resource;
+        }
+
         $extras = is_array($request->extra) ?
             $request->extra : explode(",", $request->extra);
 
-        //$resource += [$this->mergeWhen(count($extra) > 0, $this->load($extra))];
-        if(count($extras) > 0){
-
+        if(!empty($extras)){
             foreach ($extras as $extra) {
                 $resource[$extra] = $this->resource->{$extra} ?? null;
             }
