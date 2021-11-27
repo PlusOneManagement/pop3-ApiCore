@@ -41,4 +41,26 @@ trait ExtendsResource
         }
         return $resource;
     }
+
+    /**
+     * Returns extra appended data in the resource
+     * @param $request
+     * @param $resource
+     * @return mixed
+     */
+    protected function getExtraFields($request, $resource)
+    {
+        $extras = is_array($request->extra) ?
+            $request->extra : explode(",", $request->extra);
+
+        //$resource += [$this->mergeWhen(count($extra) > 0, $this->load($extra))];
+        if(count($extras) > 0){
+
+            foreach ($extras as $extra) {
+                $resource[$extra] = $this->resource->{$extra} ?? null;
+            }
+        }
+
+        return $resource;
+    }
 }
