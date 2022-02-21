@@ -10,8 +10,8 @@
     ],
     "license": "MIT",
     "require": {
-        "laravel/framework": "^8.0",
-        "nwidart/laravel-modules": "^8.0"
+        "laravel/framework": "^9.0",
+        "nwidart/laravel-modules": "^9.0"
     },
     "extra": {
         "laravel": {
